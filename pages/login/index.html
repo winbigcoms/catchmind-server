@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/">
+  <link rel="stylesheet"  href="/pages/login/style.css"/>
+  <title>캐치 마인드으</title>
+</head>
+<body>
+  <h1>캐치마인드 개발중</h1>
+  <label for="id">
+    아이디:
+    <input type="text" name="id" id="id" placeholder="사람들에게 보일 아이디를 입력해주세용">
+  </label>
+  <button id="login">로그인!</button>
+  <script>
+    const input = document.getElementById('id');
+    const login = document.getElementById('login');
+    input.addEventListener('change',e=>{
+      console.log(e.target.value)
+    })
+    login.addEventListener('click',e=>{
+      console.log(input.value);
+      axios.post('http://localhost:3000/login',{
+        id:input.value
+      }).then(res=>{
+        console.log(res)
+      }).catch(err=>{
+        console.log(err)
+      })
+    })
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</body>
+</html>
