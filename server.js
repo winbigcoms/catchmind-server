@@ -34,7 +34,6 @@ io.on('connection',socket=>{
     mongoose.connection.db.collection("subtitles",(err,collection)=>{
       collection.find({}).sort({_id:-1}).limit(1).toArray()
         .then(res=>{
-          console.log(res[0].subTitles,2);
           subTitles = res[0].subTitles
           subTitle = res[0].subTitles[Math.floor(Math.random()*3)]
         })
@@ -45,8 +44,16 @@ io.on('connection',socket=>{
   socket.on('users',(data)=>{
     socket.nickName = data.pid;
     userArray.push(data);
-    // io.to(socket.id).emit('recivedUsers',userArray);
     io.sockets.emit('recivedUsers',userArray);
+  });
+  socket.on('chatting',(data)=>{
+    const who = userArray.find(data=>data.pid===socket.nickName);
+
+    if(data.value===subTitle){
+      console.log(who.name)
+      io.sockets.emit('goldenCorrect',who.name);  
+    }
+    io.sockets.emit('chatting',data);
   });
   
   socket.on("getSubtitle",()=>{
@@ -73,9 +80,7 @@ io.on('connection',socket=>{
     socket.broadcast.emit('recivedUsers',userArray);
     console.log('유저 나감')
   });
-  socket.on('chatting',(msg)=>{
-    app.io.emit('chatting',msg);
-  })
+
   socket.on('drawing',(path)=>{
     app.io.emit('drwing',path)
   });
