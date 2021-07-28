@@ -26,7 +26,7 @@ io = require('socket.io')(server,{
 let userArray = [];
 let subTitles = [];
 let subTitle = "";
-
+let artist = "";
 
 
 io.on('connection',socket=>{
@@ -39,16 +39,20 @@ io.on('connection',socket=>{
         })
         .catch(err=>console.log(err));
     });
-  }
+  };
   console.log("logined");
   socket.on('users',(data)=>{
     socket.nickName = data.pid;
     userArray.push(data);
+    if(!artist){
+      artist = userArray[Math.floor(Math.random()*(userArray.length))].pid;
+    }
     io.sockets.emit('recivedUsers',userArray);
+    console.log(data.pid,artist);
+    io.to(socket.id).emit('artist',data.pid===artist?true:false);
   });
   socket.on('chatting',(data)=>{
     const who = userArray.find(data=>data.pid===socket.nickName);
-
     if(data.value===subTitle){
       console.log(who.name)
       io.sockets.emit('goldenCorrect',who.name);  
@@ -56,9 +60,10 @@ io.on('connection',socket=>{
     io.sockets.emit('chatting',data);
   });
   
-  socket.on("getSubtitle",()=>{
-    io.to(socket.id).emit('subtitle',subTitle);
-  })
+  socket.on("getSubject",()=>{
+    io.to(socket.id).emit('subject',subTitle);
+  });
+
   socket.on("changeSubject",()=>{
     if(subTitles.length === 0){
       mongoose.connection.db.collection("subtitles",(err,collection)=>{
@@ -78,14 +83,39 @@ io.on('connection',socket=>{
   socket.on('disconnect',()=>{
     userArray = userArray.filter(data=>data.pid !== socket.nickName);
     socket.broadcast.emit('recivedUsers',userArray);
+    if(socket.nickName === artist){
+      artist = userArray.length!==0?userArray[Math.floor(Math.random()*(userArray.length))].pid:"";
+    };
+    const newArtist = userArray.length!==0?userArray.filter(data=>data.pid===artist)[0].name:"";
+    socket.emit("artistClose",newArtist);
     console.log('유저 나감')
   });
 
-  socket.on('drawing',(path)=>{
-    app.io.emit('drwing',path)
+  socket.on('drowStart',(path)=>{
+    socket.broadcast.emit('drowStart',path);
   });
-  socket.on('removePath',(path)=>{
-    app.io.emit('removePath',path)
+  socket.on('drawing',(path)=>{
+    socket.broadcast.emit('drawing',path);
+  });
+  socket.on('resetPaint',()=>{
+    socket.broadcast.emit('resetPaint');
+  });
+  socket.on('pencilState',(state)=>{
+    console.log(state);
+    socket.broadcast.emit('pencilState',state);
+  });
+  socket.on('color',(hex)=>{
+    console.log(hex);
+    socket.broadcast.emit('color',hex);
+  });
+  socket.on('pencilStroke',(state)=>{
+    socket.broadcast.emit('pencilState',state);
+  });
+  socket.on('eraserStroke',(state)=>{
+    socket.broadcast.emit('eraserStroke',state);
+  });
+  socket.on('stopPaint',(state)=>{
+    socket.broadcast.emit('stopPaint');
   });
 })
 
