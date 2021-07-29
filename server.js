@@ -109,7 +109,7 @@ io.on('connection',socket=>{
     socket.broadcast.emit('color',hex);
   });
   socket.on('pencilStroke',(state)=>{
-    socket.broadcast.emit('pencilState',state);
+    socket.broadcast.emit('pencilStroke',state);
   });
   socket.on('eraserStroke',(state)=>{
     socket.broadcast.emit('eraserStroke',state);
