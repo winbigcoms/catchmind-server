@@ -1,4 +1,5 @@
 const path = require("path");
+const cors = require('cors');
 const router = require('express').Router();
 const fs = require("fs")
 const mysql = require('../configs/mysql');
@@ -18,7 +19,7 @@ const upload = multer({
 router.get('/login',(req,res)=>{
   res.send("login")
 });
-router.post('/login', async(req,res)=>{
+router.post('/login',cors(), async(req,res)=>{
   const {name} = req.body;
   const isExist = await mysql.query(`SELECT * FROM users.users where name="${name}"`);
   if(isExist[0].length!==0){
@@ -39,7 +40,7 @@ router.post('/login', async(req,res)=>{
   }
 });
 
-router.get('/signUp',async(req,res)=>{
+router.get('/signUp',cors(),async(req,res)=>{
   try{
     const teams = await mysql.query("SELECT * FROM users.teams");
     const titles = await mysql.query("SELECT * FROM users.titles");

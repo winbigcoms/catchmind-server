@@ -19,7 +19,7 @@ app.get('/', function (req, res) {
 });
 io = require('socket.io')(server,{
   cors:{
-    origin:"http://localhost:3000"
+    origin:"*"
   },
   maxHttpBufferSize:1e8
 });
@@ -27,7 +27,7 @@ let userArray = [];
 let subTitles = [];
 let subTitle = "";
 let artist = "";
-
+let duplicateLogin =[];
 
 io.on('connection',socket=>{
   if(subTitles.length===0){
@@ -43,19 +43,25 @@ io.on('connection',socket=>{
   console.log("logined");
   socket.on('users',(data)=>{
     socket.nickName = data.pid;
+    if(userArray.filter(user=>user.pid===data.pid).length!==0){
+      console.log("중복접속");
+      duplicateLogin.push(data.pid);
+      io.to(socket.id).emit("alreadLogin");
+      return;
+    }
     userArray.push(data);
     if(!artist){
       artist = userArray[Math.floor(Math.random()*(userArray.length))].pid;
     }
     io.sockets.emit('recivedUsers',userArray);
-    console.log(data.pid,artist);
-    io.to(socket.id).emit('artist',data.pid===artist?true:false);
+    io.to(socket.id).emit('artist',{isMyturn:data.pid===artist?true:false,artist:userArray.filter(data=>data.pid===artist)[0].name});
   });
   socket.on('chatting',(data)=>{
     const who = userArray.find(data=>data.pid===socket.nickName);
     if(data.value===subTitle){
-      console.log(who.name)
       io.sockets.emit('goldenCorrect',who.name);  
+      artist = userArray[Math.floor(Math.random()*(userArray.length))].pid;
+      subTitle = subTitles[Math.floor(Math.random()*3)];
     }
     io.sockets.emit('chatting',data);
   });
@@ -64,7 +70,7 @@ io.on('connection',socket=>{
     io.to(socket.id).emit('subject',subTitle);
   });
 
-  socket.on("changeSubject",()=>{
+  socket.on("newGame",()=>{
     if(subTitles.length === 0){
       mongoose.connection.db.collection("subtitles",(err,collection)=>{
         collection.find({}).sort({_id:-1}).limit(1).toArray()
@@ -76,11 +82,15 @@ io.on('connection',socket=>{
           .catch(err=>console.log(err));
       })
     }else{
-      subTitle = subTitles[Math.floor(Math.random()*3)]
-      socket.emit('subject',subTitle);
+      console.log(subTitle);
+      socket.emit('newGame',{subTitle,artist:userArray.filter(data=>data.pid===artist)[0].name});
     }
   })
   socket.on('disconnect',()=>{
+    if(duplicateLogin.includes(socket.nickName)){
+      duplicateLogin = duplicateLogin.filter(data=>data!==socket.nickName);
+      return;
+    }
     userArray = userArray.filter(data=>data.pid !== socket.nickName);
     socket.broadcast.emit('recivedUsers',userArray);
     if(socket.nickName === artist){
@@ -101,11 +111,9 @@ io.on('connection',socket=>{
     socket.broadcast.emit('resetPaint');
   });
   socket.on('pencilState',(state)=>{
-    console.log(state);
     socket.broadcast.emit('pencilState',state);
   });
   socket.on('color',(hex)=>{
-    console.log(hex);
     socket.broadcast.emit('color',hex);
   });
   socket.on('pencilStroke',(state)=>{
