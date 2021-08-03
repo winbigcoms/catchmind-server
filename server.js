@@ -94,10 +94,9 @@ io.on('connection',socket=>{
     userArray = userArray.filter(data=>data.pid !== socket.nickName);
     socket.broadcast.emit('recivedUsers',userArray);
     if(socket.nickName === artist){
-      console.log("1 logout artist");
       artist = userArray.length!==0?userArray[Math.floor(Math.random()*(userArray.length))].pid:"";
       const newArtist = userArray.length!==0?userArray.filter(data=>data.pid===artist)[0].name:"";
-      socket.emit("artistClose",{isMyturn:artist,artist:newArtist});
+      socket.broadcast.emit("artistClose",{isMyturn:artist,artist:newArtist});
     };
     console.log('유저 나감')
   });
