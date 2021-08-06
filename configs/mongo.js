@@ -1,12 +1,7 @@
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
+
 require("dotenv").config();
 
-mongoose.connect("mongodb://localhost:27017/catchmind",{
-  useNewUrlParser:true,
-  useUnifiedTopology:true
-}).then((e)=>{
-  console.log('on mongo');
-}).catch(e=>console.log(e));
-
-
-module.exports = mongoose
+const uri = `mongodb+srv://catchminder:${process.env.mongo_pw}@catchmind.umcuy.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+module.exports = client

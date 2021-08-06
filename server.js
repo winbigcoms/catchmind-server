@@ -4,7 +4,7 @@ const app = express();
 const path = require('path')
 const login = require('./router/login');
 const test = require('./router/test');
-const mongoose = require('./configs/mongo');
+const mongo = require('./configs/mongo');
 const utills = require('./utills');
 const server = require('http').createServer(app);
 
@@ -29,17 +29,26 @@ let subTitle = "";
 let artist = "";
 let duplicateLogin =[];
 
-io.on('connection',socket=>{
-  if(subTitles.length===0){
-    mongoose.connection.db.collection("subtitles",(err,collection)=>{
-      collection.find({}).sort({_id:-1}).limit(1).toArray()
-        .then(res=>{
-          subTitles = res[0].subTitles
-          subTitle = res[0].subTitles[Math.floor(Math.random()*3)]
-        })
-        .catch(err=>console.log(err));
+mongo.connect(err=>{
+  const collection = mongo.db('catchmind').collection('subtitles');
+  collection.find({}).sort({_id:-1}).limit(1).toArray()
+    .then(res=>{
+      subTitles = res[0].subTitles;
+      subTitle = res[0].subTitles[Math.floor(Math.random()*3)];
+      console.log(res);
+      console.log(subTitles);
+      console.log(subTitle);
+    })
+    .catch(err=>{
+      console.log(err);
+      client.close();
     });
-  };
+})
+
+io.on('connection',socket=>{
+  // if(subTitles.length===0){
+    
+  // };
   console.log("logined");
   socket.on('users',(data)=>{
     socket.nickName = data.pid;
@@ -72,15 +81,28 @@ io.on('connection',socket=>{
 
   socket.on("newGame",()=>{
     if(subTitles.length === 0){
-      mongoose.connection.db.collection("subtitles",(err,collection)=>{
-        collection.find({}).sort({_id:-1}).limit(1).toArray()
-          .then(res=>{
-            subTitles = res[0].subTitles;
-            subTitle = res[0].subTitles[Math.floor(Math.random()*3)]
-            socket.emit('subject',subTitle);
-          })
-          .catch(err=>console.log(err));
-      })
+      // mongoose.connection.db.collection("subtitles",(err,collection)=>{
+      //   collection.find({}).sort({_id:-1}).limit(1).toArray()
+      //     .then(res=>{
+      //       subTitles = res[0].subTitles;
+      //       subTitle = res[0].subTitles[Math.floor(Math.random()*3)]
+      //       socket.emit('subject',subTitle);
+      //     })
+      //     .catch(err=>console.log(err));
+      // })
+      const collection = mongo.db('catchmind').collection('subtitles');
+      collection.find({}).sort({_id:-1}).limit(1).toArray()
+        .then(res=>{
+          subTitles = res[0].subTitles;
+          subTitle = res[0].subTitles[Math.floor(Math.random()*3)];
+          console.log(res);
+          console.log(subTitles);
+          console.log(subTitle);
+        })
+        .catch(err=>{
+          console.log(err);
+          client.close();
+        });
     }else{
       console.log(subTitle);
       socket.emit('newGame',{subTitle,artist:userArray.filter(data=>data.pid===artist)[0].name});

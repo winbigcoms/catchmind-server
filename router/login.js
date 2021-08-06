@@ -1,7 +1,8 @@
 const path = require("path");
 const cors = require('cors');
 const router = require('express').Router();
-const fs = require("fs")
+const fs = require("fs");
+const jwt = require('jsonwebtoken')
 const mysql = require('../configs/mysql');
 const multer = require('multer');
 const upload = multer({
@@ -20,7 +21,29 @@ router.get('/login',(req,res)=>{
   res.send("login")
 });
 router.post('/login',cors(), async(req,res)=>{
-  const {name} = req.body;
+  const {name,token} = req.body;
+  // try{
+  //   jwt.decode = jwt.verify(token,process.env.jwtSecretCode);
+  // }catch(e){
+  //   if(e.name === 'TokenExpiredError'){
+  //     return res.status(419).send({
+  //       name:"",
+  //       pid:0,
+  //       age:0,
+  //       title:"",
+  //       team:"",
+  //       err:"token expired"
+  //     })
+  //   }
+  //   return res.status(401).send({
+  //     name:"",
+  //     pid:0,
+  //     age:0,
+  //     title:"",
+  //     team:"",
+  //     err:"not available token"
+  //   })
+  // }
   const isExist = await mysql.query(`SELECT * FROM users.users where name="${name}"`);
   if(isExist[0].length!==0){
     const result = await mysql.query(`SELECT users.*,images.* from users inner join images on users.name = images.name where users.name="${name}"`);
